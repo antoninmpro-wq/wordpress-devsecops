@@ -2,3 +2,6 @@
 *.key
 .env
 .env.local
+db_data/
+wp_data/
+*.log

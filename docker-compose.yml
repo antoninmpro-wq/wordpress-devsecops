@@ -1,26 +1,57 @@
 version: '3.8'
+
 services:
   db:
-    image: mariadb:10.6
+    image: mariadb:10.11-fips # Plus stable et légère que MySQL
+    container_name: wp_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: wordpress
-      MYSQL_PASSWORD: wordpress
+    networks:
+      - wp_backend
+    # Limitation des ressources pour t3.micro
+    deploy:
+      resources:
+        limits:
+          memory: 350M
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   wordpress:
     depends_on:
-      - db
-    image: wordpress:latest
-    ports:
-      - "8000:80"
+      db:
+        condition: service_healthy
+    image: wordpress:6.4-php8.2-apache
+    container_name: wp_app
     restart: always
+    ports:
+      - "8080:80"
     environment:
-      WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: wordpress
-      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+    volumes:
+      - wp_data:/var/www/html
+    networks:
+      - wp_backend
+    deploy:
+      resources:
+        limits:
+          memory: 450M
+
+networks:
+  wp_backend:
+    internal: false
+
 volumes:
-  db_data: {}
+  db_data:
+  wp_data:
