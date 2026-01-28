@@ -1,7 +1,11 @@
+# Sécurité
 *.pem
 *.key
 .env
 .env.local
-db_data/
-wp_data/
-*.log
+
+#Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/terraform.tfvars

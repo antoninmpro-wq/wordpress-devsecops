@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   db:
-    image: mariadb:10.11-fips # Plus stable et légère que MySQL
+    image: mariadb:10.11
     container_name: wp_db
     restart: always
     environment:
@@ -13,8 +11,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     networks:
-      - wp_backend
-    # Limitation des ressources pour t3.micro
+      - backend
     deploy:
       resources:
         limits:
@@ -29,7 +26,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    image: wordpress:6.4-php8.2-apache
+    image: wordpress:6.4-fpm-alpine
     container_name: wp_app
     restart: always
     ports:
@@ -42,15 +39,18 @@ services:
     volumes:
       - wp_data:/var/www/html
     networks:
-      - wp_backend
+      - frontend
+      - backend
     deploy:
       resources:
         limits:
           memory: 450M
 
 networks:
-  wp_backend:
-    internal: false
+  backend:
+  frontend:
+    internal: true
+  
 
 volumes:
   db_data:
