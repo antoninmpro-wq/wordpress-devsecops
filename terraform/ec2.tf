@@ -21,6 +21,7 @@ resource "aws_instance" "wp_server" {
 
   user_data = <<-EOF
               #!/bin/bash
+
               # Docker
               sudo apt-get update
               sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common gnupg
@@ -44,6 +45,18 @@ resource "aws_instance" "wp_server" {
               echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -cs) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
               sudo apt-get update
               sudo apt-get install -y trivy
+
+              # CRÉATION DU FICHIER .ENV SUR L'INSTANCE
+              cat <<EOT > /home/ubuntu/wordpress/.env
+              WORDPRESS_DB_HOST=db
+              WORDPRESS_DB_USER=${var.db_user}
+              WORDPRESS_DB_PASSWORD=${var.db_password}
+              WORDPRESS_DB_NAME=${var.db_name}
+              MYSQL_ROOT_PASSWORD=${var.db_root_password}
+              MYSQL_DATABASE=${var.db_name}
+              MYSQL_USER=${var.db_user}
+              MYSQL_PASSWORD=${var.db_password}
+              EOT
 
               # Injection du docker-compose
               mkdir -p /home/ubuntu/wordpress
