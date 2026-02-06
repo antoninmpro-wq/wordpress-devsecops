@@ -3,7 +3,7 @@ variable "aws_region" {
 }
 
 variable "instance_type" {
-  default = "t3.micro"
+  default = "t3.small"
 }
 
 variable "my_ip" {
@@ -40,5 +40,25 @@ variable "db_user" {
 
 variable "db_name" {
   description = "Nom de la base de données"
+  type        = string
+}
+
+variable "id_instance" {
+  description = "ID de mon instance"
+  type        = string
+}
+
+variable "iam_instance_profile" {
+  description = "Role AWS"
+  type        = string
+}
+
+variable "iam_role_arn" {
+  description = "Role VPC Logs"
+  type        = string
+}
+
+variable "ebs_kms_key_arn" {
+  description = "ARN de la CMK EBS"
   type        = string
 }

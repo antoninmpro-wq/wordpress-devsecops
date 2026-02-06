@@ -11,7 +11,7 @@ resource "aws_internet_gateway" "igw" {
 resource "aws_subnet" "public_subnet" {
   vpc_id                  = aws_vpc.wp_vpc.id
   cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
   availability_zone       = "${var.aws_region}a"
 }
 
@@ -30,4 +30,16 @@ resource "aws_route_table_association" "a" {
 
 resource "aws_default_security_group" "default" {
   vpc_id = aws_vpc.wp_vpc.id
+}
+
+resource "aws_cloudwatch_log_group" "vpc_flow_log" {
+  name              = "/aws/vpc-flow-log/${aws_vpc.wp_vpc.id}"
+  retention_in_days = 7 
+}
+
+resource "aws_flow_log" "vpc_flow_log" {
+  iam_role_arn      = var.iam_role_arn
+  log_destination   = aws_cloudwatch_log_group.vpc_flow_log.arn
+  traffic_type      = "ALL"
+  vpc_id            = aws_vpc.wp_vpc.id
 }
