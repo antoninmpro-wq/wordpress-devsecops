@@ -30,7 +30,7 @@ jobs:
 
       # Checkov
       - name: Checkov Scan
-        uses: bridgecrewio/checkov-action@v12.5.1
+        uses: bridgecrewio/checkov-action@v12
         with:
           directory: terraform/
           framework: terraform
