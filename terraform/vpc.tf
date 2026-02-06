@@ -35,8 +35,6 @@ resource "aws_default_security_group" "default" {
 resource "aws_cloudwatch_log_group" "vpc_flow_log" {
   name              = "/aws/vpc-flow-log/${aws_vpc.wp_vpc.id}"
   retention_in_days = 7 
-  # checkov:skip=CKV_AWS_338: "Raison du skip"
-  # checkov:skip=CKV_AWS_158: "Raison du skip"
 }
 
 resource "aws_flow_log" "vpc_flow_log" {
