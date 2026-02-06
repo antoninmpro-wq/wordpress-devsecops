@@ -1,0 +1,111 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  id-token: write # Requis pour OIDC
+  contents: read  # Requis pour Checkout le code
+
+jobs:
+  # ==========================================
+  # Scan Global
+  # ==========================================
+  security_scans:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # (scan l'historique)
+
+      # Gitleaks
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Checkov
+      - name: Checkov Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform/
+          framework: terraform
+          soft_fail: false # Bloque la pipeline si erreur
+
+      # Trivy Scan
+      - name: Trivy Scan (WordPress Image)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'wordpress:latest'
+          format: 'table'
+          #exit-code: '1' # Bloque la pipeline si failles critiques/hautes
+          severity: 'CRITICAL,HIGH'
+
+  # ==========================================
+  # TERRAFORM
+  # ==========================================
+  deploy_infrastructure:
+    name: 'Terraform'
+    needs: security_scans # Ne s'exécute que si TOUS les scans passent
+    runs-on: ubuntu-latest
+    
+    env:
+      TF_VAR_my_ip: ${{ secrets.my_ip }}
+      TF_VAR_key_name: ${{ secrets.key_name }}
+      TF_VAR_db_password: ${{ secrets.db_password }}
+      TF_VAR_db_root_password: ${{ secrets.db_root_password }}
+      TF_VAR_db_user: ${{ secrets.db_user }}
+      TF_VAR_db_name: ${{ secrets.db_name }}
+      TF_VAR_id_instance: ${{ secrets.id_instance }}
+      TF_VAR_iam_instance_profile: ${{ secrets.iam_instance_profile }}
+      TF_VAR_iam_role_arn: ${{ secrets.iam_role_arn }}
+      TF_VAR_ebs_kms_key_arn: ${{ secrets.ebs_kms_key_arn }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-west-3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan
+        
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve
+
+  # ==========================================
+  # DÉPLOIEMENT APPLICATIF
+  # ==========================================
+  deploy_app:
+    needs: deploy_infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Déploiement direct car les scans ont déjà été validés à l'étape 1
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/wordpress
+            docker compose pull
+            docker compose up -d
