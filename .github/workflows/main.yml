@@ -113,23 +113,18 @@ jobs:
           role-to-assume: ${{ secrets.GHT_ROLE_ARN }}
           aws-region: eu-west-3
 
-      - name: Get EC2 IP dynamically
-        id: get-ip
-        run: |
-          IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=WordPress-DevSecOps" "Name=instance-state-name,Values=running" \
-            --query "Reservations[*].Instances[*].PublicIpAddress" \
-            --output text)
-          
-          echo "EC2_DYNAMIC_IP=$IP" >> $GITHUB_ENV
-          echo "L'IP trouvée est : $IP"
+
+      - name: Get my IP
+        id: get_ip
+        run: echo "ip=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_OUTPUT
+
 
 
       # Déploiement direct car les scans ont déjà été validés à l'étape 1
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_DYNAMIC_IP }}
+          host: ${{ steps.get_ip.outputs.ip }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
