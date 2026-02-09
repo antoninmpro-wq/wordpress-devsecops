@@ -42,7 +42,7 @@ jobs:
         with:
           image-ref: 'wordpress:6.9.1-php8.5-fpm-alpine'
           format: 'table'
-          #exit-code: '1' # Bloque la pipeline si failles critiques/hautes
+          exit-code: '1' # Bloque la pipeline si failles critiques/hautes
           severity: 'CRITICAL,HIGH'
 
   # ==========================================
