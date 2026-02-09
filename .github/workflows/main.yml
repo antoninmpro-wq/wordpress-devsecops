@@ -107,6 +107,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GHT_ROLE_ARN }}
+          aws-region: eu-west-3
 
       - name: Get EC2 IP dynamically
         id: get-ip
@@ -118,9 +123,6 @@ jobs:
           
           echo "EC2_DYNAMIC_IP=$IP" >> $GITHUB_ENV
           echo "L'IP trouvée est : $IP"
-        with:
-          role-to-assume: ${{ secrets.GHT_ROLE_ARN }}
-          aws-region: eu-west-3
 
 
       # Déploiement direct car les scans ont déjà été validés à l'étape 1
