@@ -34,7 +34,6 @@ jobs:
         with:
           directory: terraform/
           framework: terraform
-          skip_check: "CKV_AWS_24,CKV_AWS_144"
           soft_fail: false # Bloque la pipeline si erreur
 
       # Trivy Scan
@@ -53,6 +52,9 @@ jobs:
     name: 'Terraform'
     needs: security_scans # Ne s'exécute que si TOUS les scans passent
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     
     env:
       TF_VAR_my_ip: ${{ secrets.my_ip }}
@@ -78,16 +80,18 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
 
       - name: Terraform Init
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -out=tfplan
         
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve tfplan
 
   # ==========================================
   # DÉPLOIEMENT APPLICATIF
