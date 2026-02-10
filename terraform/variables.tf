@@ -58,6 +58,11 @@ variable "iam_role_arn" {
   type        = string
 }
 
+variable "ght_role_arn" {
+  description = "Role GitHub Actions"
+  type        = string
+}
+
 variable "ebs_kms_key_arn" {
   description = "ARN de la CMK EBS"
   type        = string
