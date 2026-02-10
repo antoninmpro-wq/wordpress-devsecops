@@ -1,3 +1,5 @@
+data "github_ip_ranges" "test" {}
+
 resource "aws_security_group" "wp_sg" {
   name        = "wordpress-sg"
   description = "Allow SSH and HTTP"
@@ -9,7 +11,7 @@ resource "aws_security_group" "wp_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip] 
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
