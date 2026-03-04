@@ -67,3 +67,18 @@ variable "ebs_kms_key_arn" {
   description = "ARN de la CMK EBS"
   type        = string
 }
+
+variable "mount_point" {
+  description = "Chemin EBS volume"
+  type = string
+}
+
+variable "github_connection_arn" {
+  description = "ARN de la connection GitHub"
+  type        = string
+}
+
+variable "wpscan_api_token" {
+  description = "Clé API WPSCAN"
+  type        = string
+}
